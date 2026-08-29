@@ -1,17 +1,16 @@
 import React, { useState } from "react";
-import { Home, Calendar, Image as ImageIcon, ShoppingBag, UserPlus } from "lucide-react";
+import { Home, CalendarDays, Image as ImageIcon, ShoppingBag, UserPlus } from "lucide-react";
 import HomeScreen from "./components/HomeScreen";
 import NewsScreen from "./components/NewsScreen";
-import RidesScreen from "./components/RidesScreen";
+import CalendarScreen from "./components/CalendarScreen";
 import GalleryScreen from "./components/GalleryScreen";
 import ShopScreen from "./components/ShopScreen";
 import JoinScreen from "./components/JoinScreen";
 import { INK, GUNMETAL_2, BRASS } from "./theme";
-import logo from "./assets/logo.jpg";
 
 const TABS = [
   { key: "home", label: "Home", icon: Home },
-  { key: "rides", label: "Rides", icon: Calendar },
+  { key: "calendar", label: "Calendar", icon: CalendarDays },
   { key: "gallery", label: "Gallery", icon: ImageIcon },
   { key: "shop", label: "Shop", icon: ShoppingBag },
   { key: "join", label: "Join", icon: UserPlus },
@@ -23,7 +22,7 @@ export default function App() {
   const screens = {
     home: <HomeScreen go={setTab} />,
     news: <NewsScreen />,
-    rides: <RidesScreen />,
+    calendar: <CalendarScreen />,
     gallery: <GalleryScreen />,
     shop: <ShopScreen />,
     join: <JoinScreen />,
@@ -50,7 +49,6 @@ export default function App() {
         <div style={{ flex: 1, overflowY: "auto", position: "relative" }}>{screens[tab]}</div>
 
         <div style={{ display: "flex", alignItems: "center", borderTop: `1px solid ${GUNMETAL_2}`, background: "#0a0b0d", paddingBottom: 6 }}>
-          <img src={logo} alt="" style={{ width: 22, height: 22, borderRadius: "50%", marginLeft: 10, flexShrink: 0 }} />
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = tab === t.key || (tab === "news" && t.key === "home");
@@ -89,4 +87,4 @@ export default function App() {
       </div>
     </div>
   );
-}
+}7
