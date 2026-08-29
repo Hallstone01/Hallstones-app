@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Bike, UserPlus, ChevronRight } from "lucide-react";
+import { Bike, ChevronRight } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { Screen, Eyebrow, RoadDivider, LoadingRow, ErrorRow } from "./Screen";
 import { GUNMETAL, GUNMETAL_2, BRASS, CHROME } from "../theme";
@@ -74,26 +74,6 @@ export default function HomeScreen({ go }) {
           Hallstones is the Buckinghamshire chapter of the Widows Sons — riding together, raising money for
           Masonic charities, and supporting each other on and off the bike.
         </div>
-        <button
-          onClick={() => go("join")}
-          style={{
-            marginTop: 14,
-            background: BRASS,
-            color: GUNMETAL,
-            border: "none",
-            borderRadius: 3,
-            padding: "10px 16px",
-            fontFamily: "'Inter', sans-serif",
-            fontWeight: 700,
-            fontSize: 13.5,
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            cursor: "pointer",
-          }}
-        >
-          <UserPlus size={16} /> Request to join
-        </button>
       </div>
 
       <Eyebrow>LATEST</Eyebrow>
