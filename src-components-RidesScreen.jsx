@@ -1,0 +1,170 @@
+import React, { useEffect, useState } from "react";
+import { Calendar, Clock, MapPin, Check } from "lucide-react";
+import { supabase } from "../supabaseClient";
+import { Screen, LoadingRow, ErrorRow } from "./Screen";
+import { GUNMETAL, GUNMETAL_2, BRASS, BRASS_BRIGHT, CHROME, INK } from "../theme";
+
+function formatDate(d) {
+  return new Date(d).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+}
+
+export default function RidesScreen() {
+  const [rides, setRides] = useState([]);
+  const [counts, setCounts] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [open, setOpen] = useState(null);
+  const [rsvpForm, setRsvpForm] = useState(null); // ride id currently showing the name/email prompt
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [myRsvps, setMyRsvps] = useState({}); // ride_id -> true, tracked locally this session
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      const { data: ridesData, error: ridesError } = await supabase
+        .from("rides")
+        .select("*")
+        .order("ride_date", { ascending: true });
+      if (cancelled) return;
+      if (ridesError) {
+        setError(ridesError.message);
+        setLoading(false);
+        return;
+      }
+      setRides(ridesData || []);
+
+      const { data: rsvpData, error: rsvpError } = await supabase.from("rsvps").select("ride_id");
+      if (!cancelled && !rsvpError) {
+        const tally = {};
+        (rsvpData || []).forEach((r) => {
+          tally[r.ride_id] = (tally[r.ride_id] || 0) + 1;
+        });
+        setCounts(tally);
+      }
+      setLoading(false);
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function submitRsvp(rideId) {
+    if (!name || !email) return;
+    setSubmitting(true);
+    const { error } = await supabase.from("rsvps").insert({ ride_id: rideId, name, email });
+    setSubmitting(false);
+    if (!error) {
+      setMyRsvps((m) => ({ ...m, [rideId]: true }));
+      setCounts((c) => ({ ...c, [rideId]: (c[rideId] || 0) + 1 }));
+      setRsvpForm(null);
+      setName("");
+      setEmail("");
+    } else {
+      setError(error.message);
+    }
+  }
+
+  return (
+    <Screen title="Rides" subtitle="CALENDAR & RSVP">
+      {error && <ErrorRow message={error} />}
+      {loading && <LoadingRow />}
+      {!loading && rides.length === 0 && !error && (
+        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: CHROME }}>No rides scheduled yet.</div>
+      )}
+
+      {rides.map((r) => {
+        const isGoing = !!myRsvps[r.id];
+        const count = counts[r.id] || 0;
+        return (
+          <div key={r.id} style={{ background: GUNMETAL, border: `1px solid ${GUNMETAL_2}`, borderRadius: 4, padding: 14, marginBottom: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 600, fontSize: 16.5, color: "#f2f0ea" }}>
+                {r.title}
+              </div>
+              {r.miles ? (
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: BRASS, fontWeight: 700, whiteSpace: "nowrap" }}>
+                  {r.miles} mi
+                </div>
+              ) : null}
+            </div>
+            <div style={{ display: "flex", gap: 14, marginTop: 8, flexWrap: "wrap" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 5, fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: CHROME }}>
+                <Calendar size={13} color={BRASS} /> {formatDate(r.ride_date)}
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: 5, fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: CHROME }}>
+                <Clock size={13} color={BRASS} /> {r.ride_time}
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: 5, fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: CHROME }}>
+                <MapPin size={13} color={BRASS} /> {r.meet_point}
+              </span>
+            </div>
+
+            {open === r.id && r.description && (
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: CHROME, marginTop: 10, lineHeight: 1.5 }}>
+                {r.description}
+              </div>
+            )}
+
+            {rsvpForm === r.id && !isGoing && (
+              <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your name"
+                  style={{ background: INK, border: `1px solid ${GUNMETAL_2}`, borderRadius: 3, padding: "8px 10px", color: "#f2f0ea", fontFamily: "'Inter', sans-serif", fontSize: 13 }}
+                />
+                <input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email"
+                  style={{ background: INK, border: `1px solid ${GUNMETAL_2}`, borderRadius: 3, padding: "8px 10px", color: "#f2f0ea", fontFamily: "'Inter', sans-serif", fontSize: 13 }}
+                />
+                <button
+                  disabled={submitting}
+                  onClick={() => submitRsvp(r.id)}
+                  style={{ background: BRASS, color: INK, border: "none", borderRadius: 3, padding: "8px 0", fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+                >
+                  {submitting ? "Sending…" : "Confirm RSVP"}
+                </button>
+              </div>
+            )}
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
+              <button
+                onClick={() => setOpen(open === r.id ? null : r.id)}
+                style={{ background: "none", border: "none", color: BRASS, fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 600, cursor: "pointer", padding: 0 }}
+              >
+                {open === r.id ? "Less" : "Details"}
+              </button>
+              <button
+                onClick={() => (isGoing ? null : setRsvpForm(rsvpForm === r.id ? null : r.id))}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: isGoing ? BRASS : "transparent",
+                  color: isGoing ? INK : BRASS_BRIGHT,
+                  border: `1px solid ${BRASS}`,
+                  borderRadius: 3,
+                  padding: "7px 12px",
+                  fontFamily: "'Inter', sans-serif",
+                  fontWeight: 700,
+                  fontSize: 12.5,
+                  cursor: isGoing ? "default" : "pointer",
+                }}
+              >
+                {isGoing ? <Check size={14} /> : null}
+                {isGoing ? "You're in" : "RSVP"}
+                <span style={{ opacity: 0.7, fontWeight: 500 }}>· {count} riding</span>
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </Screen>
+  );
+}
