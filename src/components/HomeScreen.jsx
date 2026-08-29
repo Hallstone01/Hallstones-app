@@ -67,10 +67,7 @@ export default function HomeScreen({ go }) {
         <div style={{ position: "absolute", right: -10, top: -10, opacity: 0.15 }}>
           <Bike size={90} color={BRASS} />
         </div>
-        <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 19, color: "#fff", fontWeight: 600 }}>
-          Brothers on the road, in the trade.
-        </div>
-        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: CHROME, marginTop: 6, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: CHROME, lineHeight: 1.5 }}>
           Hallstones is the Buckinghamshire chapter of the Widows Sons — riding together, raising money for
           Masonic charities, and supporting each other on and off the bike.
         </div>
