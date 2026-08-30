@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { Screen, RoadDivider, LoadingRow, ErrorRow } from "./Screen";
-import { BRASS, CHROME } from "../theme";
+import { BRASS, CHROME, GUNMETAL_2 } from "../theme";
 
 export default function NewsScreen() {
   const [news, setNews] = useState([]);
@@ -33,6 +33,13 @@ export default function NewsScreen() {
       )}
       {news.map((n, i) => (
         <div key={n.id} style={{ marginBottom: 18 }}>
+          {n.image_url && (
+            <img
+              src={n.image_url}
+              alt=""
+              style={{ width: "100%", height: 160, objectFit: "cover", borderRadius: 4, marginBottom: 10, display: "block" }}
+            />
+          )}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
             <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: BRASS, fontWeight: 700, letterSpacing: "0.08em" }}>
               {n.tag}
