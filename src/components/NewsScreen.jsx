@@ -34,11 +34,24 @@ export default function NewsScreen() {
       {news.map((n, i) => (
         <div key={n.id} style={{ marginBottom: 18 }}>
           {n.image_url && (
-            <img
-              src={n.image_url}
-              alt=""
-              style={{ width: "100%", height: 160, objectFit: "cover", borderRadius: 4, marginBottom: 10, display: "block" }}
-            />
+            <div
+              style={{
+                width: "100%",
+                maxHeight: 320,
+                borderRadius: 4,
+                marginBottom: 10,
+                overflow: "hidden",
+                background: GUNMETAL_2,
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <img
+                src={n.image_url}
+                alt=""
+                style={{ width: "100%", maxHeight: 320, objectFit: "contain", display: "block" }}
+              />
+            </div>
           )}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
             <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: BRASS, fontWeight: 700, letterSpacing: "0.08em" }}>
