@@ -45,24 +45,35 @@ export default function GalleryScreen() {
             key={g.id}
             onClick={() => setSelected(g)}
             style={{
-              background: `${GUNMETAL_2} url(${g.image_url}) center/cover no-repeat`,
+              background: GUNMETAL_2,
               aspectRatio: "1 / 1",
               borderRadius: 4,
               display: "flex",
-              alignItems: "flex-end",
-              padding: 8,
+              alignItems: "center",
+              justifyContent: "center",
               cursor: "pointer",
               position: "relative",
+              overflow: "hidden",
             }}
           >
+            <img
+              src={g.image_url}
+              alt=""
+              style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
+            />
             <ImageIcon size={16} color="rgba(255,255,255,0.35)" style={{ position: "absolute", top: 8, right: 8 }} />
             <div
               style={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                padding: "16px 8px 8px",
+                background: "linear-gradient(transparent, rgba(0,0,0,0.85))",
                 fontFamily: "'Inter', sans-serif",
                 fontSize: 11,
                 color: "#fff",
                 lineHeight: 1.3,
-                textShadow: "0 1px 4px rgba(0,0,0,0.8)",
               }}
             >
               {g.caption}
@@ -86,16 +97,22 @@ export default function GalleryScreen() {
         >
           <div
             style={{
-              backgroundImage: `url(${selected.image_url})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
               width: "85%",
               maxWidth: 420,
-              aspectRatio: "1/1",
+              maxHeight: "80vh",
+              background: GUNMETAL_2,
               borderRadius: 6,
               position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
             }}
           >
+            <img
+              src={selected.image_url}
+              alt=""
+              style={{ width: "100%", maxHeight: "70vh", objectFit: "contain", display: "block" }}
+            />
             <button
               onClick={() => setSelected(null)}
               style={{
@@ -115,14 +132,10 @@ export default function GalleryScreen() {
             </button>
             <div
               style={{
-                position: "absolute",
-                bottom: 10,
-                left: 10,
-                right: 10,
+                padding: "10px 12px",
                 fontFamily: "'Inter', sans-serif",
                 color: "#fff",
                 fontSize: 13,
-                textShadow: "0 1px 4px rgba(0,0,0,0.8)",
               }}
             >
               {selected.caption}
