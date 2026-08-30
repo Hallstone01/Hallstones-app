@@ -39,7 +39,7 @@ export default function HomeScreen({ go }) {
   }, []);
 
   return (
-    <Screen title="Hallstones" subtitle="WIDOWS SONS MASONIC BIKERS ASSOC.">
+    <Screen title="Hallstone Chapter" subtitle="WIDOWS SONS MASONIC BIKERS ASSOC.">
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 18 }}>
         <img
           src={logo}
