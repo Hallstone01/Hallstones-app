@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, MapPin, Check } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { Screen, LoadingRow, ErrorRow } from "./Screen";
-import { GUNMETAL, GUNMETAL_2, BRASS, CHROME, INK } from "../theme";
+import { GUNMETAL, GUNMETAL_2, BRASS, BRASS_BRIGHT, CHROME, INK } from "../theme";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -24,6 +24,7 @@ function formatLong(dateStr) {
 
 export default function NatterScreen() {
   const [events, setEvents] = useState([]);
+  const [counts, setCounts] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [viewDate, setViewDate] = useState(() => {
@@ -31,18 +32,36 @@ export default function NatterScreen() {
     d.setDate(1);
     return d;
   });
+  const [rsvpForm, setRsvpForm] = useState(null);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [myRsvps, setMyRsvps] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data: eventsData, error: eventsError } = await supabase
         .from("natter_nights")
         .select("*")
         .order("event_date", { ascending: true });
       if (cancelled) return;
-      if (error) setError(error.message);
-      else setEvents(data || []);
+      if (eventsError) {
+        setError(eventsError.message);
+        setLoading(false);
+        return;
+      }
+      setEvents(eventsData || []);
+
+      const { data: rsvpData, error: rsvpError } = await supabase.from("natter_rsvps").select("natter_id");
+      if (!cancelled && !rsvpError) {
+        const tally = {};
+        (rsvpData || []).forEach((r) => {
+          tally[r.natter_id] = (tally[r.natter_id] || 0) + 1;
+        });
+        setCounts(tally);
+      }
       setLoading(false);
     }
     load();
@@ -50,6 +69,22 @@ export default function NatterScreen() {
       cancelled = true;
     };
   }, []);
+
+  async function submitRsvp(natterId) {
+    if (!name || !email) return;
+    setSubmitting(true);
+    const { error } = await supabase.from("natter_rsvps").insert({ natter_id: natterId, name, email });
+    setSubmitting(false);
+    if (!error) {
+      setMyRsvps((m) => ({ ...m, [natterId]: true }));
+      setCounts((c) => ({ ...c, [natterId]: (c[natterId] || 0) + 1 }));
+      setRsvpForm(null);
+      setName("");
+      setEmail("");
+    } else {
+      setError(error.message);
+    }
+  }
 
   const eventsByDate = {};
   events.forEach((e) => {
@@ -155,15 +190,7 @@ export default function NatterScreen() {
                       {d}
                     </span>
                     {hasEvent && (
-                      <span
-                        style={{
-                          width: 4,
-                          height: 4,
-                          borderRadius: "50%",
-                          background: BRASS,
-                          marginTop: 2,
-                        }}
-                      />
+                      <span style={{ width: 4, height: 4, borderRadius: "50%", background: BRASS, marginTop: 2 }} />
                     )}
                   </div>
                 );
@@ -190,42 +217,94 @@ export default function NatterScreen() {
             </div>
           )}
 
-          {upcoming.map((e) => (
-            <div
-              key={e.id}
-              style={{
-                background: GUNMETAL,
-                border: `1px solid ${GUNMETAL_2}`,
-                borderRadius: 4,
-                padding: 14,
-                marginBottom: 10,
-              }}
-            >
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 600, fontSize: 16, color: "#f2f0ea" }}>
-                {e.title}
-              </div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: BRASS, marginTop: 2 }}>
-                {formatLong(e.event_date)}
-              </div>
-              <div style={{ display: "flex", gap: 14, marginTop: 8, flexWrap: "wrap" }}>
-                {e.event_time && (
-                  <span style={{ display: "flex", alignItems: "center", gap: 5, fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: CHROME }}>
-                    <Clock size={13} color={BRASS} /> {e.event_time}
-                  </span>
-                )}
-                {e.location && (
-                  <span style={{ display: "flex", alignItems: "center", gap: 5, fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: CHROME }}>
-                    <MapPin size={13} color={BRASS} /> {e.location}
-                  </span>
-                )}
-              </div>
-              {e.description && (
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: CHROME, marginTop: 8, lineHeight: 1.5 }}>
-                  {e.description}
+          {upcoming.map((e) => {
+            const isGoing = !!myRsvps[e.id];
+            const count = counts[e.id] || 0;
+            return (
+              <div
+                key={e.id}
+                style={{
+                  background: GUNMETAL,
+                  border: `1px solid ${GUNMETAL_2}`,
+                  borderRadius: 4,
+                  padding: 14,
+                  marginBottom: 10,
+                }}
+              >
+                <div style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 600, fontSize: 16, color: "#f2f0ea" }}>
+                  {e.title}
                 </div>
-              )}
-            </div>
-          ))}
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: BRASS, marginTop: 2 }}>
+                  {formatLong(e.event_date)}
+                </div>
+                <div style={{ display: "flex", gap: 14, marginTop: 8, flexWrap: "wrap" }}>
+                  {e.event_time && (
+                    <span style={{ display: "flex", alignItems: "center", gap: 5, fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: CHROME }}>
+                      <Clock size={13} color={BRASS} /> {e.event_time}
+                    </span>
+                  )}
+                  {e.location && (
+                    <span style={{ display: "flex", alignItems: "center", gap: 5, fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: CHROME }}>
+                      <MapPin size={13} color={BRASS} /> {e.location}
+                    </span>
+                  )}
+                </div>
+                {e.description && (
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: CHROME, marginTop: 8, lineHeight: 1.5 }}>
+                    {e.description}
+                  </div>
+                )}
+
+                {rsvpForm === e.id && !isGoing && (
+                  <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                    <input
+                      value={name}
+                      onChange={(ev) => setName(ev.target.value)}
+                      placeholder="Your name"
+                      style={{ background: INK, border: `1px solid ${GUNMETAL_2}`, borderRadius: 3, padding: "8px 10px", color: "#f2f0ea", fontFamily: "'Inter', sans-serif", fontSize: 13 }}
+                    />
+                    <input
+                      value={email}
+                      onChange={(ev) => setEmail(ev.target.value)}
+                      placeholder="Email"
+                      style={{ background: INK, border: `1px solid ${GUNMETAL_2}`, borderRadius: 3, padding: "8px 10px", color: "#f2f0ea", fontFamily: "'Inter', sans-serif", fontSize: 13 }}
+                    />
+                    <button
+                      disabled={submitting}
+                      onClick={() => submitRsvp(e.id)}
+                      style={{ background: BRASS, color: INK, border: "none", borderRadius: 3, padding: "8px 0", fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+                    >
+                      {submitting ? "Sending…" : "Confirm RSVP"}
+                    </button>
+                  </div>
+                )}
+
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
+                  <button
+                    onClick={() => (isGoing ? null : setRsvpForm(rsvpForm === e.id ? null : e.id))}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      background: isGoing ? BRASS : "transparent",
+                      color: isGoing ? INK : BRASS_BRIGHT,
+                      border: `1px solid ${BRASS}`,
+                      borderRadius: 3,
+                      padding: "7px 12px",
+                      fontFamily: "'Inter', sans-serif",
+                      fontWeight: 700,
+                      fontSize: 12.5,
+                      cursor: isGoing ? "default" : "pointer",
+                    }}
+                  >
+                    {isGoing ? <Check size={14} /> : null}
+                    {isGoing ? "You're in" : "RSVP"}
+                    <span style={{ opacity: 0.7, fontWeight: 500 }}>· {count} going</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </>
       )}
     </Screen>
