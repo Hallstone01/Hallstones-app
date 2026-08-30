@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Calendar, Clock, MapPin, Check } from "lucide-react";
+import { Calendar, Clock, MapPin, Check, Users } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { Screen, LoadingRow, ErrorRow } from "./Screen";
 import { GUNMETAL, GUNMETAL_2, BRASS, BRASS_BRIGHT, CHROME, INK } from "../theme";
@@ -10,14 +10,14 @@ function formatDate(d) {
 
 export default function RidesScreen() {
   const [rides, setRides] = useState([]);
-  const [counts, setCounts] = useState({});
+  const [attendees, setAttendees] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [open, setOpen] = useState(null);
-  const [rsvpForm, setRsvpForm] = useState(null); // ride id currently showing the name/email prompt
+  const [rsvpForm, setRsvpForm] = useState(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [myRsvps, setMyRsvps] = useState({}); // ride_id -> true, tracked locally this session
+  const [myRsvps, setMyRsvps] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -36,13 +36,14 @@ export default function RidesScreen() {
       }
       setRides(ridesData || []);
 
-      const { data: rsvpData, error: rsvpError } = await supabase.from("rsvps").select("ride_id");
+      const { data: rsvpData, error: rsvpError } = await supabase.from("rsvps").select("ride_id, name");
       if (!cancelled && !rsvpError) {
-        const tally = {};
+        const grouped = {};
         (rsvpData || []).forEach((r) => {
-          tally[r.ride_id] = (tally[r.ride_id] || 0) + 1;
+          grouped[r.ride_id] = grouped[r.ride_id] || [];
+          grouped[r.ride_id].push(r.name);
         });
-        setCounts(tally);
+        setAttendees(grouped);
       }
       setLoading(false);
     }
@@ -59,7 +60,7 @@ export default function RidesScreen() {
     setSubmitting(false);
     if (!error) {
       setMyRsvps((m) => ({ ...m, [rideId]: true }));
-      setCounts((c) => ({ ...c, [rideId]: (c[rideId] || 0) + 1 }));
+      setAttendees((a) => ({ ...a, [rideId]: [...(a[rideId] || []), name] }));
       setRsvpForm(null);
       setName("");
       setEmail("");
@@ -78,7 +79,8 @@ export default function RidesScreen() {
 
       {rides.map((r) => {
         const isGoing = !!myRsvps[r.id];
-        const count = counts[r.id] || 0;
+        const names = attendees[r.id] || [];
+        const count = names.length;
         return (
           <div key={r.id} style={{ background: GUNMETAL, border: `1px solid ${GUNMETAL_2}`, borderRadius: 4, padding: 14, marginBottom: 12 }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
@@ -106,6 +108,15 @@ export default function RidesScreen() {
             {open === r.id && r.description && (
               <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: CHROME, marginTop: 10, lineHeight: 1.5 }}>
                 {r.description}
+              </div>
+            )}
+
+            {names.length > 0 && (
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 6, marginTop: 10 }}>
+                <Users size={13} color={CHROME} style={{ marginTop: 2, flexShrink: 0 }} />
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: CHROME, lineHeight: 1.5 }}>
+                  {names.join(", ")}
+                </div>
               </div>
             )}
 
