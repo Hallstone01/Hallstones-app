@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Clock, MapPin, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, MapPin, Check, Users } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { Screen, LoadingRow, ErrorRow } from "./Screen";
 import { GUNMETAL, GUNMETAL_2, BRASS, BRASS_BRIGHT, CHROME, INK } from "../theme";
@@ -24,7 +24,7 @@ function formatLong(dateStr) {
 
 export default function EventsScreen() {
   const [events, setEvents] = useState([]);
-  const [counts, setCounts] = useState({});
+  const [attendees, setAttendees] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [viewDate, setViewDate] = useState(() => {
@@ -54,13 +54,14 @@ export default function EventsScreen() {
       }
       setEvents(eventsData || []);
 
-      const { data: rsvpData, error: rsvpError } = await supabase.from("event_rsvps").select("event_id");
+      const { data: rsvpData, error: rsvpError } = await supabase.from("event_rsvps").select("event_id, name");
       if (!cancelled && !rsvpError) {
-        const tally = {};
+        const grouped = {};
         (rsvpData || []).forEach((r) => {
-          tally[r.event_id] = (tally[r.event_id] || 0) + 1;
+          grouped[r.event_id] = grouped[r.event_id] || [];
+          grouped[r.event_id].push(r.name);
         });
-        setCounts(tally);
+        setAttendees(grouped);
       }
       setLoading(false);
     }
@@ -77,7 +78,7 @@ export default function EventsScreen() {
     setSubmitting(false);
     if (!error) {
       setMyRsvps((m) => ({ ...m, [eventId]: true }));
-      setCounts((c) => ({ ...c, [eventId]: (c[eventId] || 0) + 1 }));
+      setAttendees((a) => ({ ...a, [eventId]: [...(a[eventId] || []), name] }));
       setRsvpForm(null);
       setName("");
       setEmail("");
@@ -219,7 +220,8 @@ export default function EventsScreen() {
 
           {upcoming.map((e) => {
             const isGoing = !!myRsvps[e.id];
-            const count = counts[e.id] || 0;
+            const names = attendees[e.id] || [];
+            const count = names.length;
             return (
               <div
                 key={e.id}
@@ -252,6 +254,15 @@ export default function EventsScreen() {
                 {e.description && (
                   <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: CHROME, marginTop: 8, lineHeight: 1.5 }}>
                     {e.description}
+                  </div>
+                )}
+
+                {names.length > 0 && (
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 6, marginTop: 10 }}>
+                    <Users size={13} color={CHROME} style={{ marginTop: 2, flexShrink: 0 }} />
+                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: CHROME, lineHeight: 1.5 }}>
+                      {names.join(", ")}
+                    </div>
                   </div>
                 )}
 
