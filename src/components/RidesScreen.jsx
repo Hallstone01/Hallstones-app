@@ -8,6 +8,10 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
 }
 
+function toKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export default function RidesScreen() {
   const [rides, setRides] = useState([]);
   const [attendees, setAttendees] = useState({});
@@ -69,15 +73,18 @@ export default function RidesScreen() {
     }
   }
 
+  const todayKey = toKey(new Date());
+  const upcoming = rides.filter((r) => r.ride_date >= todayKey);
+
   return (
     <Screen title="Rides" subtitle="CALENDAR & RSVP">
       {error && <ErrorRow message={error} />}
       {loading && <LoadingRow />}
-      {!loading && rides.length === 0 && !error && (
+      {!loading && upcoming.length === 0 && !error && (
         <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: CHROME }}>No rides scheduled yet.</div>
       )}
 
-      {rides.map((r) => {
+      {upcoming.map((r) => {
         const isGoing = !!myRsvps[r.id];
         const names = attendees[r.id] || [];
         const count = names.length;
