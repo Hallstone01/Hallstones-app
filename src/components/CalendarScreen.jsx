@@ -1,14 +1,16 @@
 import React, { useState } from "react";
-import { Calendar, Coffee, Flag } from "lucide-react";
+import { Calendar, Coffee, Flag, Trophy } from "lucide-react";
 import RidesScreen from "./RidesScreen";
 import NatterScreen from "./NatterScreen";
 import EventsScreen from "./EventsScreen";
+import CowboyDrawScreen from "./CowboyDrawScreen";
 import { GUNMETAL, GUNMETAL_2, BRASS, INK } from "../theme";
 
 const SUB_TABS = [
   { key: "rides", label: "Rides", icon: Calendar },
   { key: "natter", label: "Natter", icon: Coffee },
   { key: "events", label: "Events", icon: Flag },
+  { key: "draw", label: "Draw", icon: Trophy },
 ];
 
 export default function CalendarScreen() {
@@ -66,6 +68,7 @@ export default function CalendarScreen() {
       {sub === "rides" && <RidesScreen />}
       {sub === "natter" && <NatterScreen />}
       {sub === "events" && <EventsScreen />}
+      {sub === "draw" && <CowboyDrawScreen />}
     </div>
   );
 }
