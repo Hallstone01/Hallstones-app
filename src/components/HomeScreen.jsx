@@ -197,4 +197,12 @@ export default function HomeScreen({ go }) {
                 <Heart size={16} color={BRASS} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                
+                <div style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 14, color: "#f2f0ea" }}>
+                  {d.charity_name}
+                </div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, color: CHROME, marginTop: 2 }}>
+                  {formatDonationDate(d.donation_date)}
+                  {d.note ? ` · ${d.note}` : ""}
+                </div>
+              </div>
+              
