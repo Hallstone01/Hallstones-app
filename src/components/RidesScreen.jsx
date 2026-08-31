@@ -3,9 +3,43 @@ import { Calendar, Clock, MapPin, Check, Users } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { Screen, LoadingRow, ErrorRow } from "./Screen";
 import { GUNMETAL, GUNMETAL_2, BRASS, BRASS_BRIGHT, CHROME, INK } from "../theme";
+import { useLanguage } from "../LanguageContext";
 
-function formatDate(d) {
-  return new Date(d).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+const TRANSLATIONS = {
+  en: {
+    title: "Rides",
+    subtitle: "CALENDAR & RSVP",
+    noRides: "No rides scheduled yet.",
+    less: "Less",
+    details: "Details",
+    youreIn: "You're in",
+    rsvp: "RSVP",
+    riding: "riding",
+    namePlaceholder: "Your name",
+    emailPlaceholder: "Email",
+    sending: "Sending…",
+    confirmRsvp: "Confirm RSVP",
+    miles: "mi",
+  },
+  pl: {
+    title: "Przejażdżki",
+    subtitle: "KALENDARZ I ZAPISY",
+    noRides: "Brak zaplanowanych przejażdżek.",
+    less: "Mniej",
+    details: "Szczegóły",
+    youreIn: "Jesteś zapisany",
+    rsvp: "Zapisz się",
+    riding: "jedzie",
+    namePlaceholder: "Twoje imię",
+    emailPlaceholder: "E-mail",
+    sending: "Wysyłanie…",
+    confirmRsvp: "Potwierdź zapis",
+    miles: "mil",
+  },
+};
+
+function formatDate(d, locale) {
+  return new Date(d).toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" });
 }
 
 function toKey(d) {
@@ -13,6 +47,10 @@ function toKey(d) {
 }
 
 export default function RidesScreen() {
+  const { lang } = useLanguage();
+  const t = TRANSLATIONS[lang];
+  const locale = lang === "pl" ? "pl-PL" : "en-GB";
+
   const [rides, setRides] = useState([]);
   const [attendees, setAttendees] = useState({});
   const [loading, setLoading] = useState(true);
@@ -77,11 +115,11 @@ export default function RidesScreen() {
   const upcoming = rides.filter((r) => r.ride_date >= todayKey);
 
   return (
-    <Screen title="Rides" subtitle="CALENDAR & RSVP">
+    <Screen title={t.title} subtitle={t.subtitle}>
       {error && <ErrorRow message={error} />}
       {loading && <LoadingRow />}
       {!loading && upcoming.length === 0 && !error && (
-        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: CHROME }}>No rides scheduled yet.</div>
+        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: CHROME }}>{t.noRides}</div>
       )}
 
       {upcoming.map((r) => {
@@ -96,13 +134,13 @@ export default function RidesScreen() {
               </div>
               {r.miles ? (
                 <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: BRASS, fontWeight: 700, whiteSpace: "nowrap" }}>
-                  {r.miles} mi
+                  {r.miles} {t.miles}
                 </div>
               ) : null}
             </div>
             <div style={{ display: "flex", gap: 14, marginTop: 8, flexWrap: "wrap" }}>
               <span style={{ display: "flex", alignItems: "center", gap: 5, fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: CHROME }}>
-                <Calendar size={13} color={BRASS} /> {formatDate(r.ride_date)}
+                <Calendar size={13} color={BRASS} /> {formatDate(r.ride_date, locale)}
               </span>
               <span style={{ display: "flex", alignItems: "center", gap: 5, fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: CHROME }}>
                 <Clock size={13} color={BRASS} /> {r.ride_time}
@@ -132,13 +170,13 @@ export default function RidesScreen() {
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name"
+                  placeholder={t.namePlaceholder}
                   style={{ background: INK, border: `1px solid ${GUNMETAL_2}`, borderRadius: 3, padding: "8px 10px", color: "#f2f0ea", fontFamily: "'Inter', sans-serif", fontSize: 13 }}
                 />
                 <input
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email"
+                  placeholder={t.emailPlaceholder}
                   style={{ background: INK, border: `1px solid ${GUNMETAL_2}`, borderRadius: 3, padding: "8px 10px", color: "#f2f0ea", fontFamily: "'Inter', sans-serif", fontSize: 13 }}
                 />
                 <button
@@ -146,7 +184,7 @@ export default function RidesScreen() {
                   onClick={() => submitRsvp(r.id)}
                   style={{ background: BRASS, color: INK, border: "none", borderRadius: 3, padding: "8px 0", fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
                 >
-                  {submitting ? "Sending…" : "Confirm RSVP"}
+                  {submitting ? t.sending : t.confirmRsvp}
                 </button>
               </div>
             )}
@@ -156,7 +194,7 @@ export default function RidesScreen() {
                 onClick={() => setOpen(open === r.id ? null : r.id)}
                 style={{ background: "none", border: "none", color: BRASS, fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 600, cursor: "pointer", padding: 0 }}
               >
-                {open === r.id ? "Less" : "Details"}
+                {open === r.id ? t.less : t.details}
               </button>
               <button
                 onClick={() => (isGoing ? null : setRsvpForm(rsvpForm === r.id ? null : r.id))}
@@ -176,8 +214,8 @@ export default function RidesScreen() {
                 }}
               >
                 {isGoing ? <Check size={14} /> : null}
-                {isGoing ? "You're in" : "RSVP"}
-                <span style={{ opacity: 0.7, fontWeight: 500 }}>· {count} riding</span>
+                {isGoing ? t.youreIn : t.rsvp}
+                <span style={{ opacity: 0.7, fontWeight: 500 }}>· {count} {t.riding}</span>
               </button>
             </div>
           </div>
