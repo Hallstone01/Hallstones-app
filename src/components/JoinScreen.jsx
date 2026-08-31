@@ -4,11 +4,28 @@ import { supabase } from "../supabaseClient";
 import { Screen, ErrorRow } from "./Screen";
 import { GUNMETAL, GUNMETAL_2, BRASS, CHROME, INK } from "../theme";
 
+const MEMBERSHIP_TYPES = [
+  {
+    key: "patch",
+    label: "Full Patch Member",
+    blurb: "Open to Master Masons who ride.",
+  },
+  {
+    key: "cornerstone",
+    label: "Cornerstone (Associate)",
+    blurb: "Open to anyone who supports the chapter — no Masonic membership required.",
+  },
+];
+
 export default function JoinScreen() {
+  const [membershipType, setMembershipType] = useState("patch");
   const [form, setForm] = useState({ name: "", email: "", lodge: "", bike: "" });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
+
+  const isPatch = membershipType === "patch";
+  const activeType = MEMBERSHIP_TYPES.find((t) => t.key === membershipType);
 
   const field = (key, label, placeholder) => (
     <div style={{ marginBottom: 14 }}>
@@ -40,8 +57,9 @@ export default function JoinScreen() {
     const { error } = await supabase.from("join_requests").insert({
       full_name: form.name,
       email: form.email,
-      mother_lodge: form.lodge,
+      mother_lodge: isPatch ? form.lodge : null,
       bike: form.bike,
+      membership_type: membershipType,
     });
     setSubmitting(false);
     if (error) setError(error.message);
@@ -67,13 +85,42 @@ export default function JoinScreen() {
   return (
     <Screen title="Join us" subtitle="MEMBERSHIP REQUEST">
       {error && <ErrorRow message={error} />}
-      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: CHROME, marginBottom: 16, lineHeight: 1.5 }}>
-        Open to Master Masons who ride. Tell us a little about yourself and we'll follow up.
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        {MEMBERSHIP_TYPES.map((t) => {
+          const active = t.key === membershipType;
+          return (
+            <button
+              key={t.key}
+              onClick={() => setMembershipType(t.key)}
+              style={{
+                flex: 1,
+                background: active ? BRASS : "transparent",
+                color: active ? INK : CHROME,
+                border: `1px solid ${active ? BRASS : GUNMETAL_2}`,
+                borderRadius: 3,
+                padding: "10px 8px",
+                fontFamily: "'Inter', sans-serif",
+                fontWeight: 700,
+                fontSize: 12.5,
+                cursor: "pointer",
+              }}
+            >
+              {t.label}
+            </button>
+          );
+        })}
       </div>
+
+      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: CHROME, marginBottom: 16, lineHeight: 1.5 }}>
+        {activeType.blurb}
+      </div>
+
       {field("name", "FULL NAME", "John Smith")}
       {field("email", "EMAIL", "you@email.com")}
-      {field("lodge", "MOTHER LODGE", "Lodge name & number")}
-      {field("bike", "BIKE", "Make & model")}
+      {isPatch && field("lodge", "MOTHER LODGE", "Lodge name & number")}
+      {field("bike", "BIKE", "Make & model (optional)")}
+
       <button
         disabled={submitting}
         onClick={submit}
