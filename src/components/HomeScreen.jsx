@@ -1,9 +1,38 @@
 import React, { useEffect, useState } from "react";
-import { Bike, ChevronRight, Heart } from "lucide-react";
+import { Bike, ChevronRight, Heart, Languages } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { Screen, Eyebrow, RoadDivider, LoadingRow, ErrorRow } from "./Screen";
-import { GUNMETAL, GUNMETAL_2, BRASS, CHROME } from "../theme";
+import { GUNMETAL, GUNMETAL_2, BRASS, CHROME, INK } from "../theme";
 import logo from "../assets/logo.jpg";
+
+const TRANSLATIONS = {
+  en: {
+    title: "Hallstone Chapter",
+    subtitle: "WIDOWS SONS MASONIC BIKERS ASSOC.",
+    intro:
+      "Hallstones is the Buckinghamshire chapter of the Widows Sons — riding together, raising money for Masonic charities, and supporting each other on and off the bike.",
+    latest: "LATEST",
+    noNotices: "No notices yet.",
+    allNotices: "All notices",
+    charityDonations: "CHARITY DONATIONS",
+    noDonations: "No donations recorded yet.",
+    couldntLoadNotices: "Couldn't load notices",
+    couldntLoadDonations: "Couldn't load donations",
+  },
+  pl: {
+    title: "Hallstone Chapter",
+    subtitle: "STOWARZYSZENIE MOTOCYKLISTÓW MASOŃSKICH WIDOWS SONS",
+    intro:
+      "Hallstones to oddział Widows Sons w hrabstwie Buckinghamshire — jeździmy razem, zbieramy pieniądze na cele charytatywne i wspieramy się nawzajem na motocyklu i poza nim.",
+    latest: "NAJNOWSZE",
+    noNotices: "Brak ogłoszeń.",
+    allNotices: "Wszystkie ogłoszenia",
+    charityDonations: "DAROWIZNY CHARYTATYWNE",
+    noDonations: "Brak zarejestrowanych darowizn.",
+    couldntLoadNotices: "Nie udało się wczytać ogłoszeń",
+    couldntLoadDonations: "Nie udało się wczytać darowizn",
+  },
+};
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -23,6 +52,9 @@ function formatAmount(pence) {
 }
 
 export default function HomeScreen({ go }) {
+  const [lang, setLang] = useState("en");
+  const t = TRANSLATIONS[lang];
+
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -38,7 +70,7 @@ export default function HomeScreen({ go }) {
       const { data, error } = await supabase
         .from("news")
         .select("*")
-        .order("created_at", { ascending: false })
+              .order("created_at", { ascending: false })
         .limit(2);
       if (cancelled) return;
       if (error) setError(error.message);
@@ -72,7 +104,35 @@ export default function HomeScreen({ go }) {
   }, []);
 
   return (
-    <Screen title="Hallstone Chapter" subtitle="WIDOWS SONS MASONIC BIKERS ASSOC.">
+    <Screen title={t.title} subtitle={t.subtitle}>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+        <button
+          onClick={() => setLang(lang === "en" ? "pl" : "en")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            background: "transparent",
+            border: `1px solid ${BRASS}`,
+            borderRadius: 3,
+            padding: "6px 10px",
+            cursor: "pointer",
+          }}
+        >
+          <Languages size={13} color={BRASS} />
+          <span
+            style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 12,
+              fontWeight: 700,
+              color: BRASS,
+            }}
+          >
+            {lang === "en" ? "Polski" : "English"}
+          </span>
+        </button>
+      </div>
+
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 18 }}>
         <img
           src={logo}
@@ -101,17 +161,16 @@ export default function HomeScreen({ go }) {
           <Bike size={90} color={BRASS} />
         </div>
         <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: CHROME, lineHeight: 1.5 }}>
-          Hallstones is the Buckinghamshire chapter of the Widows Sons — riding together, raising money for
-          Masonic charities, and supporting each other on and off the bike.
+          {t.intro}
         </div>
       </div>
 
-      <Eyebrow>LATEST</Eyebrow>
-      {error && <ErrorRow message={`Couldn't load notices: ${error}`} />}
-            {loading && <LoadingRow />}
+      <Eyebrow>{t.latest}</Eyebrow>
+      {error && <ErrorRow message={`${t.couldntLoadNotices}: ${error}`} />}
+      {loading && <LoadingRow />}
       {!loading && !error && news.length === 0 && (
         <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: CHROME }}>
-          No notices yet.
+          {t.noNotices}
         </div>
       )}
       {!loading &&
@@ -134,40 +193,20 @@ export default function HomeScreen({ go }) {
                   {n.title}
                 </div>
               </div>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: CHROME, whiteSpace: "nowrap" }}>
-                {timeAgo(n.created_at)}
-              </div>
-            </div>
-            {i === 0 && news.length > 1 && <RoadDivider />}
-          </div>
-        ))}
-
-      <button
-        onClick={() => go("news")}
-        style={{
-          background: "none",
-          border: "none",
-          color: BRASS,
-          fontFamily: "'Inter', sans-serif",
-          fontSize: 13,
-          fontWeight: 600,
-          padding: "10px 0 0",
-          display: "flex",
-          alignItems: "center",
-          gap: 4,
+                        gap: 4,
           cursor: "pointer",
         }}
       >
-        All notices <ChevronRight size={14} />
+        {t.allNotices} <ChevronRight size={14} />
       </button>
 
       <div style={{ marginTop: 26 }}>
-        <Eyebrow>CHARITY DONATIONS</Eyebrow>
-        {donationsError && <ErrorRow message={`Couldn't load donations: ${donationsError}`} />}
+        <Eyebrow>{t.charityDonations}</Eyebrow>
+        {donationsError && <ErrorRow message={`${t.couldntLoadDonations}: ${donationsError}`} />}
         {donationsLoading && <LoadingRow />}
         {!donationsLoading && !donationsError && donations.length === 0 && (
           <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: CHROME }}>
-            No donations recorded yet.
+            {t.noDonations}
           </div>
         )}
         {!donationsLoading &&
@@ -211,7 +250,6 @@ export default function HomeScreen({ go }) {
             </div>
           ))}
       </div>
-    </Screen>
-  );
-}
+    
+
 
