@@ -1,23 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { ShoppingBag } from "lucide-react";
-import { supabase } from "../supabaseClient";
-import { Screen, LoadingRow, ErrorRow } from "./Screen";
-import { GUNMETAL, GUNMETAL_2, BRASS, BRASS_BRIGHT, CHROME, INK } from "../theme";
 
-function formatPrice(pence) {
-  return `£${(pence / 100).toFixed(2)}`;
-}
-
-export default function ShopScreen() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [cart, setCart] = useState({});
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [buyerName, setBuyerName] = useState("");
-  const [buyerEmail, setBuyerEmail] = useState("");
-  const [placing, setPlacing] = useState(false);
-  const [placed, setPlaced] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
