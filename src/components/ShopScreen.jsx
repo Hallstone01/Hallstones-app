@@ -1,4 +1,23 @@
+import React, { useEffect, useState } from "react";
+import { ShoppingBag, ExternalLink } from "lucide-react";
+import { supabase } from "../supabaseClient";
+import { Screen, LoadingRow, ErrorRow } from "./Screen";
+import { GUNMETAL, GUNMETAL_2, BRASS, BRASS_BRIGHT, CHROME, INK } from "../theme";
 
+function formatPrice(pence) {
+  return `£${(pence / 100).toFixed(2)}`;
+}
+
+export default function ShopScreen() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [cart, setCart] = useState({});
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [buyerName, setBuyerName] = useState("");
+  const [buyerEmail, setBuyerEmail] = useState("");
+  const [placing, setPlacing] = useState(false);
+  const [placed, setPlaced] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,90 +80,120 @@
       )}
 
       {items.map((s) => (
-        <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${GUNMETAL_2}` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 44, height: 44, background: GUNMETAL, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+        <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${GUNMETAL_2}`, gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+            <div style={{ width: 44, height: 44, background: GUNMETAL, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
               {s.image_url ? (
                 <img src={s.image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               ) : (
                 <ShoppingBag size={18} color={BRASS} />
               )}
             </div>
-            <div>
+            <div style={{ minWidth: 0 }}>
               <div style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 14, color: "#f2f0ea" }}>{s.name}</div>
               <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: CHROME }}>{formatPrice(s.price_pence)}</div>
             </div>
           </div>
-          <button
-            onClick={() => add(s.id)}
-            style={{
-              background: cart[s.id] ? BRASS : "transparent",
-              color: cart[s.id] ? INK : BRASS_BRIGHT,
-              border: `1px solid ${BRASS}`,
-              borderRadius: 3,
-              padding: "7px 12px",
-              fontFamily: "'Inter', sans-serif",
-              fontWeight: 700,
-              fontSize: 12.5,
-              cursor: "pointer",
-            }}
-          >
-            {cart[s.id] ? `Added (${cart[s.id]})` : "Add"}
-          </button>
+
+          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+            {s.payment_url ? (
+              <a
+                href={s.payment_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  background: BRASS,
+                  color: INK,
+                  border: "none",
+                  borderRadius: 3,
+                  padding: "7px 12px",
+                  fontFamily: "'Inter', sans-serif",
+                  fontWeight: 700,
+                  fontSize: 12.5,
+                  textDecoration: "none",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Buy now <ExternalLink size={12} />
+              </a>
+            ) : (
+              <button
+                onClick={() => add(s.id)}
+                style={{
+                  background: cart[s.id] ? BRASS : "transparent",
+                  color: cart[s.id] ? INK : BRASS_BRIGHT,
+                  border: `1px solid ${BRASS}`,
+                  borderRadius: 3,
+                  padding: "7px 12px",
+                  fontFamily: "'Inter', sans-serif",
+                  fontWeight: 700,
+                  fontSize: 12.5,
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {cart[s.id] ? `Added (${cart[s.id]})` : "Add"}
+              </button>
+            )}
+          </div>
         </div>
       ))}
 
-      <div style={{ marginTop: 18, padding: "12px 14px", background: GUNMETAL, borderRadius: 4 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: CHROME }}>
-            {totalItems === 0 ? "Cart is empty" : `${totalItems} item${totalItems > 1 ? "s" : ""} · ${formatPrice(totalPence)}`}
-          </span>
-          <button
-            disabled={totalItems === 0}
-            onClick={() => setCheckoutOpen(true)}
-            style={{
-              background: totalItems ? BRASS : GUNMETAL_2,
-              color: totalItems ? INK : CHROME,
-              border: "none",
-              borderRadius: 3,
-              padding: "8px 14px",
-              fontFamily: "'Inter', sans-serif",
-              fontWeight: 700,
-              fontSize: 12.5,
-              cursor: totalItems ? "pointer" : "default",
-            }}
-          >
-            Checkout
-          </button>
-        </div>
-
-        {checkoutOpen && totalItems > 0 && (
-          <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-            <input
-              value={buyerName}
-              onChange={(e) => setBuyerName(e.target.value)}
-              placeholder="Your name"
-              style={{ background: INK, border: `1px solid ${GUNMETAL_2}`, borderRadius: 3, padding: "8px 10px", color: "#f2f0ea", fontFamily: "'Inter', sans-serif", fontSize: 13 }}
-            />
-            <input
-              value={buyerEmail}
-              onChange={(e) => setBuyerEmail(e.target.value)}
-              placeholder="Email"
-              style={{ background: INK, border: `1px solid ${GUNMETAL_2}`, borderRadius: 3, padding: "8px 10px", color: "#f2f0ea", fontFamily: "'Inter', sans-serif", fontSize: 13 }}
-            />
+      {totalItems > 0 && (
+        <div style={{ marginTop: 18, padding: "12px 14px", background: GUNMETAL, borderRadius: 4 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: CHROME }}>
+              {totalItems} item{totalItems > 1 ? "s" : ""} · {formatPrice(totalPence)}
+            </span>
             <button
-              disabled={placing}
-              onClick={placeOrder}
-              style={{ background: BRASS, color: INK, border: "none", borderRadius: 3, padding: "9px 0", fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+              onClick={() => setCheckoutOpen(true)}
+              style={{
+                background: BRASS,
+                color: INK,
+                border: "none",
+                borderRadius: 3,
+                padding: "8px 14px",
+                fontFamily: "'Inter', sans-serif",
+                fontWeight: 700,
+                fontSize: 12.5,
+                cursor: "pointer",
+              }}
             >
-              {placing ? "Placing order…" : "Place order"}
+              Checkout
             </button>
           </div>
-        )}
-      </div>
+
+          {checkoutOpen && (
+            <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+              <input
+                value={buyerName}
+                onChange={(e) => setBuyerName(e.target.value)}
+                placeholder="Your name"
+                style={{ background: INK, border: `1px solid ${GUNMETAL_2}`, borderRadius: 3, padding: "8px 10px", color: "#f2f0ea", fontFamily: "'Inter', sans-serif", fontSize: 13 }}
+              />
+              <input
+                value={buyerEmail}
+                onChange={(e) => setBuyerEmail(e.target.value)}
+                placeholder="Email"
+                style={{ background: INK, border: `1px solid ${GUNMETAL_2}`, borderRadius: 3, padding: "8px 10px", color: "#f2f0ea", fontFamily: "'Inter', sans-serif", fontSize: 13 }}
+              />
+              <button
+                disabled={placing}
+                onClick={placeOrder}
+                style={{ background: BRASS, color: INK, border: "none", borderRadius: 3, padding: "9px 0", fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+              >
+                {placing ? "Placing order…" : "Place order"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11.5, color: CHROME, marginTop: 10, lineHeight: 1.5 }}>
-        Orders are logged for an officer to follow up — online card payment isn't connected yet (see README for adding Stripe).
+        Items with "Buy now" pay securely via Square. Other items are logged as an order for an officer to follow up.
       </div>
     </Screen>
   );
