@@ -107,7 +107,8 @@ export default function HomeScreen({ go }) {
       </div>
 
       <Eyebrow>LATEST</Eyebrow>
-      {error && <ErrorRow message={`Couldn't load notices: ${      {loading && <LoadingRow />}
+      {error && <ErrorRow message={`Couldn't load notices: ${error}`} />}
+            {loading && <LoadingRow />}
       {!loading && !error && news.length === 0 && (
         <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: CHROME }}>
           No notices yet.
@@ -213,3 +214,4 @@ export default function HomeScreen({ go }) {
     </Screen>
   );
 }
+
