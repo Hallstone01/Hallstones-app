@@ -107,8 +107,7 @@ export default function HomeScreen({ go }) {
       </div>
 
       <Eyebrow>LATEST</Eyebrow>
-      {error && <ErrorRow message={`Couldn't load notices: ${error}`} />}
-      {loading && <LoadingRow />}
+      {error && <ErrorRow message={`Couldn't load notices: ${      {loading && <LoadingRow />}
       {!loading && !error && news.length === 0 && (
         <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: CHROME }}>
           No notices yet.
@@ -205,4 +204,12 @@ export default function HomeScreen({ go }) {
                   {d.note ? ` · ${d.note}` : ""}
                 </div>
               </div>
-              
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13.5, color: BRASS, fontWeight: 700, whiteSpace: "nowrap" }}>
+                {formatAmount(d.amount_pence)}
+              </div>
+            </div>
+          ))}
+      </div>
+    </Screen>
+  );
+}
