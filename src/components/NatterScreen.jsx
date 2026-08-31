@@ -3,19 +3,49 @@ import { ChevronLeft, ChevronRight, Clock, MapPin, Check, Users } from "lucide-r
 import { supabase } from "../supabaseClient";
 import { Screen, LoadingRow, ErrorRow } from "./Screen";
 import { GUNMETAL, GUNMETAL_2, BRASS, BRASS_BRIGHT, CHROME, INK } from "../theme";
+import { useLanguage } from "../LanguageContext";
 
-const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
+const TRANSLATIONS = {
+  en: {
+    title: "Natter Nights",
+    subtitle: "SOCIAL CALENDAR",
+    upcoming: "UPCOMING",
+    nothingYet: "Nothing on the calendar yet.",
+    namePlaceholder: "Your name",
+    emailPlaceholder: "Email",
+    sending: "Sending…",
+    confirmRsvp: "Confirm RSVP",
+    youreIn: "You're in",
+    rsvp: "RSVP",
+    going: "going",
+    months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    dayLetters: ["S", "M", "T", "W", "T", "F", "S"],
+    locale: "en-GB",
+  },
+  pl: {
+    title: "Wieczory Natter",
+    subtitle: "KALENDARZ SPOTKAŃ",
+    upcoming: "NADCHODZĄCE",
+    nothingYet: "Brak wydarzeń w kalendarzu.",
+    namePlaceholder: "Twoje imię",
+    emailPlaceholder: "E-mail",
+    sending: "Wysyłanie…",
+    confirmRsvp: "Potwierdź zapis",
+    youreIn: "Jesteś zapisany",
+    rsvp: "Zapisz się",
+    going: "idzie",
+    months: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"],
+    dayLetters: ["Nd", "Pn", "Wt", "Śr", "Cz", "Pt", "So"],
+    locale: "pl-PL",
+  },
+};
 
 function toKey(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function formatLong(dateStr) {
-  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-GB", {
+function formatLong(dateStr, locale) {
+  return new Date(dateStr + "T00:00:00").toLocaleDateString(locale, {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -23,6 +53,9 @@ function formatLong(dateStr) {
 }
 
 export default function NatterScreen() {
+  const { lang } = useLanguage();
+  const t = TRANSLATIONS[lang];
+
   const [events, setEvents] = useState([]);
   const [attendees, setAttendees] = useState({});
   const [loading, setLoading] = useState(true);
@@ -107,7 +140,7 @@ export default function NatterScreen() {
   const upcoming = events.filter((e) => e.event_date >= todayKey);
 
   return (
-    <Screen title="Natter Nights" subtitle="SOCIAL CALENDAR">
+    <Screen title={t.title} subtitle={t.subtitle}>
       {error && <ErrorRow message={error} />}
       {loading && <LoadingRow />}
 
@@ -131,7 +164,7 @@ export default function NatterScreen() {
                 <ChevronLeft size={18} color={BRASS} />
               </button>
               <div style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 600, fontSize: 16, color: "#f2f0ea" }}>
-                {MONTH_NAMES[month]} {year}
+                {t.months[month]} {year}
               </div>
               <button
                 onClick={() => setViewDate(new Date(year, month + 1, 1))}
@@ -143,7 +176,7 @@ export default function NatterScreen() {
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, marginBottom: 4 }}>
-              {DAY_LETTERS.map((l, i) => (
+              {t.dayLetters.map((l, i) => (
                 <div
                   key={i}
                   style={{
@@ -209,12 +242,12 @@ export default function NatterScreen() {
               marginBottom: 6,
             }}
           >
-            UPCOMING
+            {t.upcoming}
           </div>
 
           {upcoming.length === 0 && (
             <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: CHROME }}>
-              Nothing on the calendar yet.
+              {t.nothingYet}
             </div>
           )}
 
@@ -237,7 +270,7 @@ export default function NatterScreen() {
                   {e.title}
                 </div>
                 <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: BRASS, marginTop: 2 }}>
-                  {formatLong(e.event_date)}
+                  {formatLong(e.event_date, t.locale)}
                 </div>
                 <div style={{ display: "flex", gap: 14, marginTop: 8, flexWrap: "wrap" }}>
                   {e.event_time && (
@@ -271,13 +304,13 @@ export default function NatterScreen() {
                     <input
                       value={name}
                       onChange={(ev) => setName(ev.target.value)}
-                      placeholder="Your name"
+                      placeholder={t.namePlaceholder}
                       style={{ background: INK, border: `1px solid ${GUNMETAL_2}`, borderRadius: 3, padding: "8px 10px", color: "#f2f0ea", fontFamily: "'Inter', sans-serif", fontSize: 13 }}
                     />
                     <input
                       value={email}
                       onChange={(ev) => setEmail(ev.target.value)}
-                      placeholder="Email"
+                      placeholder={t.emailPlaceholder}
                       style={{ background: INK, border: `1px solid ${GUNMETAL_2}`, borderRadius: 3, padding: "8px 10px", color: "#f2f0ea", fontFamily: "'Inter', sans-serif", fontSize: 13 }}
                     />
                     <button
@@ -285,7 +318,7 @@ export default function NatterScreen() {
                       onClick={() => submitRsvp(e.id)}
                       style={{ background: BRASS, color: INK, border: "none", borderRadius: 3, padding: "8px 0", fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
                     >
-                      {submitting ? "Sending…" : "Confirm RSVP"}
+                      {submitting ? t.sending : t.confirmRsvp}
                     </button>
                   </div>
                 )}
@@ -309,8 +342,8 @@ export default function NatterScreen() {
                     }}
                   >
                     {isGoing ? <Check size={14} /> : null}
-                    {isGoing ? "You're in" : "RSVP"}
-                    <span style={{ opacity: 0.7, fontWeight: 500 }}>· {count} going</span>
+                    {isGoing ? t.youreIn : t.rsvp}
+                    <span style={{ opacity: 0.7, fontWeight: 500 }}>· {count} {t.going}</span>
                   </button>
                 </div>
               </div>
