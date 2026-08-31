@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Bike, ChevronRight } from "lucide-react";
+import { Bike, ChevronRight, Heart } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { Screen, Eyebrow, RoadDivider, LoadingRow, ErrorRow } from "./Screen";
 import { GUNMETAL, GUNMETAL_2, BRASS, CHROME } from "../theme";
@@ -13,10 +13,23 @@ function timeAgo(dateStr) {
   return `${days} days ago`;
 }
 
+function formatDonationDate(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function formatAmount(pence) {
+  return `£${(pence / 100).toFixed(2)}`;
+}
+
 export default function HomeScreen({ go }) {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [donations, setDonations] = useState([]);
+  const [donationsLoading, setDonationsLoading] = useState(true);
+  const [donationsError, setDonationsError] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -33,6 +46,26 @@ export default function HomeScreen({ go }) {
       setLoading(false);
     }
     load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadDonations() {
+      setDonationsLoading(true);
+      const { data, error } = await supabase
+        .from("charity_donations")
+        .select("*")
+        .order("donation_date", { ascending: false })
+        .limit(5);
+      if (cancelled) return;
+      if (error) setDonationsError(error.message);
+      else setDonations(data || []);
+      setDonationsLoading(false);
+    }
+    loadDonations();
     return () => {
       cancelled = true;
     };
@@ -127,6 +160,41 @@ export default function HomeScreen({ go }) {
       >
         All notices <ChevronRight size={14} />
       </button>
-    </Screen>
-  );
-}
+
+      <div style={{ marginTop: 26 }}>
+        <Eyebrow>CHARITY DONATIONS</Eyebrow>
+        {donationsError && <ErrorRow message={`Couldn't load donations: ${donationsError}`} />}
+        {donationsLoading && <LoadingRow />}
+        {!donationsLoading && !donationsError && donations.length === 0 && (
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: CHROME }}>
+            No donations recorded yet.
+          </div>
+        )}
+        {!donationsLoading &&
+          donations.map((d) => (
+            <div
+              key={d.id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: "12px 0",
+                borderBottom: `1px solid ${GUNMETAL_2}`,
+              }}
+            >
+              <div
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 4,
+                  background: GUNMETAL,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <Heart size={16} color={BRASS} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                
