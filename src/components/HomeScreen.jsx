@@ -4,13 +4,15 @@ import { supabase } from "../supabaseClient";
 import { Screen, Eyebrow, RoadDivider, LoadingRow, ErrorRow } from "./Screen";
 import { GUNMETAL, GUNMETAL_2, BRASS, CHROME, INK } from "../theme";
 import logo from "../assets/logo.jpg";
+import { useLanguage } from "../LanguageContext";
 
 const TRANSLATIONS = {
   en: {
     title: "Hallstone Chapter",
     subtitle: "WIDOWS SONS MASONIC BIKERS ASSOC.",
     intro:
-      "Hallstones is the Buckinghamshire chapter of the Widows Sons — riding together, raising money for Masonic charities, and supporting each other on and off the bike.",
+      "Hallstones is the Buckinghamshire chapter of the Widows Sons — riding together, raising money for " +
+      "Masonic charities, and supporting each other on and off the bike.",
     latest: "LATEST",
     noNotices: "No notices yet.",
     allNotices: "All notices",
@@ -23,7 +25,8 @@ const TRANSLATIONS = {
     title: "Hallstone Chapter",
     subtitle: "STOWARZYSZENIE MOTOCYKLISTÓW MASOŃSKICH WIDOWS SONS",
     intro:
-      "Hallstones to oddział Widows Sons w hrabstwie Buckinghamshire — jeździmy razem, zbieramy pieniądze na cele charytatywne i wspieramy się nawzajem na motocyklu i poza nim.",
+      "Hallstones to oddział Widows Sons w hrabstwie Buckinghamshire — jeździmy razem, zbieramy " +
+      "pieniądze na cele charytatywne i wspieramy się nawzajem na motocyklu i poza nim.",
     latest: "NAJNOWSZE",
     noNotices: "Brak ogłoszeń.",
     allNotices: "Wszystkie ogłoszenia",
@@ -52,7 +55,7 @@ function formatAmount(pence) {
 }
 
 export default function HomeScreen({ go }) {
-  const [lang, setLang] = useState("en");
+  const { lang, toggleLang } = useLanguage();
   const t = TRANSLATIONS[lang];
 
   const [news, setNews] = useState([]);
@@ -107,7 +110,7 @@ export default function HomeScreen({ go }) {
     <Screen title={t.title} subtitle={t.subtitle}>
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
         <button
-          onClick={() => setLang(lang === "en" ? "pl" : "en")}
+          onClick={toggleLang}
           style={{
             display: "flex",
             alignItems: "center",
