@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ShoppingBag, ExternalLink } from "lucide-react";
+import { ShoppingBag, ExternalLink, Minus, Plus } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { Screen, LoadingRow, ErrorRow } from "./Screen";
 import { GUNMETAL, GUNMETAL_2, BRASS, BRASS_BRIGHT, CHROME, INK } from "../theme";
@@ -12,7 +12,6 @@ const TRANSLATIONS = {
     empty: "No items listed yet.",
     buyNow: "Buy now",
     add: "Add",
-    added: "Added",
     checkout: "Checkout",
     namePlaceholder: "Your name",
     emailPlaceholder: "Email",
@@ -29,7 +28,6 @@ const TRANSLATIONS = {
     empty: "Brak jeszcze produktów.",
     buyNow: "Kup teraz",
     add: "Dodaj",
-    added: "Dodano",
     checkout: "Do kasy",
     namePlaceholder: "Twoje imię",
     emailPlaceholder: "E-mail",
@@ -78,6 +76,15 @@ export default function ShopScreen() {
   }, []);
 
   const add = (id) => setCart((c) => ({ ...c, [id]: (c[id] || 0) + 1 }));
+  const remove = (id) =>
+    setCart((c) => {
+      const next = { ...c };
+      const qty = (next[id] || 0) - 1;
+      if (qty <= 0) delete next[id];
+      else next[id] = qty;
+      return next;
+    });
+
   const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
   const totalPence = items.reduce((sum, it) => sum + (cart[it.id] || 0) * it.price_pence, 0);
 
@@ -151,68 +158,91 @@ export default function ShopScreen() {
         </div>
       )}
 
-      {visibleItems.map((s) => (
-        <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${GUNMETAL_2}`, gap: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-            <div style={{ width: 44, height: 44, background: GUNMETAL, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
-              {s.image_url ? (
-                <img src={s.image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      {visibleItems.map((s) => {
+        const qty = cart[s.id] || 0;
+        return (
+          <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${GUNMETAL_2}`, gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+              <div style={{ width: 44, height: 44, background: GUNMETAL, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                {s.image_url ? (
+                  <img src={s.image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <ShoppingBag size={18} color={BRASS} />
+                )}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 14, color: "#f2f0ea" }}>{s.name}</div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: CHROME }}>{formatPrice(s.price_pence)}</div>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+              {s.payment_url ? (
+                <a
+                  href={s.payment_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    background: BRASS,
+                    color: INK,
+                    border: "none",
+                    borderRadius: 3,
+                    padding: "7px 12px",
+                    fontFamily: "'Inter', sans-serif",
+                    fontWeight: 700,
+                    fontSize: 12.5,
+                    textDecoration: "none",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {t.buyNow} <ExternalLink size={12} />
+                </a>
+              ) : qty > 0 ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 6, background: BRASS, borderRadius: 3, padding: "4px 6px" }}>
+                  <button
+                    onClick={() => remove(s.id)}
+                    aria-label="Decrease quantity"
+                    style={{ background: "none", border: "none", color: INK, cursor: "pointer", display: "flex", alignItems: "center", padding: 3 }}
+                  >
+                    <Minus size={13} />
+                  </button>
+                  <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 12.5, color: INK, minWidth: 14, textAlign: "center" }}>
+                    {qty}
+                  </span>
+                  <button
+                    onClick={() => add(s.id)}
+                    aria-label="Increase quantity"
+                    style={{ background: "none", border: "none", color: INK, cursor: "pointer", display: "flex", alignItems: "center", padding: 3 }}
+                  >
+                    <Plus size={13} />
+                  </button>
+                </div>
               ) : (
-                <ShoppingBag size={18} color={BRASS} />
+                <button
+                  onClick={() => add(s.id)}
+                  style={{
+                    background: "transparent",
+                    color: BRASS_BRIGHT,
+                    border: `1px solid ${BRASS}`,
+                    borderRadius: 3,
+                    padding: "7px 12px",
+                    fontFamily: "'Inter', sans-serif",
+                    fontWeight: 700,
+                    fontSize: 12.5,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {t.add}
+                </button>
               )}
             </div>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 14, color: "#f2f0ea" }}>{s.name}</div>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: CHROME }}>{formatPrice(s.price_pence)}</div>
-            </div>
           </div>
-
-          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-            {s.payment_url ? (
-              <a
-                href={s.payment_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 5,
-                  background: BRASS,
-                  color: INK,
-                  border: "none",
-                  borderRadius: 3,
-                  padding: "7px 12px",
-                  fontFamily: "'Inter', sans-serif",
-                  fontWeight: 700,
-                  fontSize: 12.5,
-                  textDecoration: "none",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {t.buyNow} <ExternalLink size={12} />
-              </a>
-            ) : (
-              <button
-                onClick={() => add(s.id)}
-                style={{
-                  background: cart[s.id] ? BRASS : "transparent",
-                  color: cart[s.id] ? INK : BRASS_BRIGHT,
-                  border: `1px solid ${BRASS}`,
-                  borderRadius: 3,
-                  padding: "7px 12px",
-                  fontFamily: "'Inter', sans-serif",
-                  fontWeight: 700,
-                  fontSize: 12.5,
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {cart[s.id] ? `${t.added} (${cart[s.id]})` : t.add}
-              </button>
-            )}
-          </div>
-        </div>
-      ))}
+        );
+      })}
 
       {totalItems > 0 && (
         <div style={{ marginTop: 18, padding: "12px 14px", background: GUNMETAL, borderRadius: 4 }}>
